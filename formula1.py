@@ -1,5 +1,7 @@
+from datetime import date
 import json
 import os
+from apt import Cache
 import pandas as pd
 import numpy as np
 import random
@@ -7,12 +9,19 @@ import requests
 import fastf1 as ff1
 import seaborn as sns
 from fastf1 import plotting
+from collections import namedtuple
 import matplotlib.pyplot as plt
 
 
 class FormulaOneSeason:
     def __init__(self):
-        pass
+        self.create_cache_folder()
+
+        self.years = []
+        self.races = []
+        self.drivers = []
+        self.constructors = []
+        self.round_number = 0
 
     def ergast_retrieve(self, api_endpoint: str):
         url = f'https://ergast.com/api/f1/{api_endpoint}.json'
@@ -29,17 +38,54 @@ class FormulaOneSeason:
         ff1.Cache.enable_cache(dir_path)
     
     def get_years(self):
-        resp= requests.get('https://ergast.com/api/f1/seasons?limit=300&offset=0.json')
-        resp_dict = json.loads(resp.text)
-        print(resp_dict)
-        # seasons = self.ergast_retrieve('seasons?limit=300&offset=0')
+        for year in range(1950, date.today().year + 1):
+            self.years.append(year)
+        
+        return(self.years)
 
-        # for season in seasons['SeasonTable']['Seasons']:
-        #     print(season['season'])
+    def get_races(self, season: str):
+        races = self.ergast_retrieve(season)
+        for race in races['RaceTable']['Races']:
+            self.races.append(race['raceName'])
+        
+        return(self.races)
+    
+    def get_drivers(self, season: str):
+        drivers = self.ergast_retrieve(f'{season}/drivers')
+        for driver in drivers['DriverTable']['Drivers']:
+            self.drivers.append(f"{driver['givenName']} {driver['familyName']}")
+        
+        return(self.drivers)
+    
+    def get_constructors(self, season: str):
+        constructors = self.ergast_retrieve(f'{season}/constructors')
+        for constructor in constructors['ConstructorTable']['Constructors']:
+            self.constructors.append(constructor['name'])
+        
+        return(self.drivers)
+    
+    def get_constructor_standings(self, season: str=None, round: int=0):
+        if not season:
+            url = 'current/ConstructorStandings'
+        else:
+            url = f'{season}/{round}/constructorStandings'
+
+        standings = self.ergast_retrieve(url)
+        
+        for standing in standings['StandingsTable']['StandingsLists']:
+            for i in range(len(standing['ConstructorStandings'])):
+                print(f"{standing['ConstructorStandings'][i]['position']}\t\t{standing['ConstructorStandings'][i]['Constructor']['name']}\t\t{standing['ConstructorStandings'][i]['points']}")
+
+    
+
 
 f1_test = FormulaOneSeason()
-f1_test.create_cache_folder()
-f1_test.get_years()
+# season = f1_test.get_years()
+# f1_test.get_races('2022')
+# f1_test.get_drivers('2022')
+# f1_test.get_constructors('2022')
+# f1_test.get_constructor_standings('2022', 5)
+f1_test.get_constructor_standings()
 
 # # Specify the number of rounds we want in our plot (in other words, specify the current round)
 # rounds = 19
