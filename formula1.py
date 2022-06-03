@@ -1,13 +1,12 @@
 from datetime import date
 import json
 import os
-from apt import Cache
 import pandas as pd
 import numpy as np
 import random
 import requests
 import fastf1 as ff1
-import seaborn as sns
+# import seaborn as sns
 from fastf1 import plotting
 from collections import namedtuple
 import matplotlib.pyplot as plt
@@ -64,7 +63,7 @@ class FormulaOneSeason:
         
         return(self.drivers)
     
-    def get_constructor_standings(self, season: str=None, round: int=0):
+    def constructor_standings(self, season: str=None, round: int=0):
         if not season:
             url = 'current/ConstructorStandings'
         else:
@@ -74,7 +73,27 @@ class FormulaOneSeason:
         
         for standing in standings['StandingsTable']['StandingsLists']:
             for i in range(len(standing['ConstructorStandings'])):
-                print(f"{standing['ConstructorStandings'][i]['position']}\t\t{standing['ConstructorStandings'][i]['Constructor']['name']}\t\t{standing['ConstructorStandings'][i]['points']}")
+                print(
+                    f"{standing['ConstructorStandings'][i]['position']}\t \
+                    {standing['ConstructorStandings'][i]['Constructor']['name']}\t \
+                    {standing['ConstructorStandings'][i]['points']}"
+                )
+
+    def driver_standings(self, season: str=None, round: int=0):
+        if not season:
+            url = 'current/driverStandings'
+        else:
+            url = f'{season}/{round}/driverStandings'
+
+        standings = self.ergast_retrieve(url)
+        
+        for standing in standings['StandingsTable']['StandingsLists']:
+            for i in range(len(standing['DriverStandings'])):
+                print(
+                    f"{standing['DriverStandings'][i]['position']}\t \
+                    {standing['DriverStandings'][i]['Driver']['familyName']}, {standing['DriverStandings'][i]['Driver']['givenName']}\t \
+                    {standing['DriverStandings'][i]['points']}"
+                )
 
     
 
@@ -85,7 +104,8 @@ f1_test = FormulaOneSeason()
 # f1_test.get_drivers('2022')
 # f1_test.get_constructors('2022')
 # f1_test.get_constructor_standings('2022', 5)
-f1_test.get_constructor_standings()
+# f1_test.constructor_standings()
+# f1_test.driver_standings(2021, 17)
 
 # # Specify the number of rounds we want in our plot (in other words, specify the current round)
 # rounds = 19
@@ -109,7 +129,7 @@ all_championship_standings = pd.DataFrame()
 # We also want to store which driver drives for which team, which will help us later
 driver_team_mapping = {}
 
-# Initate a loop through all the rounds
+# Initiate a loop through all the rounds
 for i in range(1, rounds + 1):
     # Make request to driverStandings endpoint for the current round
     race = ergast_retrieve(f'current/{i}/driverStandings')
